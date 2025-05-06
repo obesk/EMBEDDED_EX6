@@ -36,13 +36,14 @@ void init_adc(void){
     AD1CON1bits.AD12B = 0; // Selecting 10-bit mode
     AD1CON2bits.VCFG = 0b00;// Voltage reference vdd
     AD1CON3bits.ADCS = 8; // Set the Tad
+    AD1CON3bits.SAMC = 16; // Set the automatic end
 
     AD1CON1bits.ADDMABM = 0; // DMA on
     AD1CSSLbits.CSS11 = 1; // Select AN11
     AD1CON1bits.FORM = 0b00; // Data Output Format integer
 
     AD1CON1bits.ASAM = 0; // Selecting manual mode starting
-    AD1CON1bits.SSRC = 0; // Selecting manual conversion
+    AD1CON1bits.SSRC = 7; // conversion starts after time specified by SAMC
 
     AD1CON2bits.CHPS = 0b00; // 1 channel mode
     AD1CON2bits.CSCNA = 1; // Scan ch0
@@ -60,8 +61,8 @@ int main(void) {
 
     TRISA = TRISG = 0x0000; // setting port A and G as output
     ANSELA = ANSELC = ANSELD = ANSELE = ANSELG = 0x0000; // disabling analog function
-    TRISB = 0xFFFF;
-    ANSELB = 0xFFFF;
+    TRISB = 0xFFF7;
+    ANSELB = 0xFFF7;
 
     // our largerst string is 20 bytes, this should be changed in case of differnt print messages
     char output_str [20]; 
@@ -75,22 +76,23 @@ int main(void) {
 
     AD1CON1bits.ADON = 1; // Turn on the ADC
     AD1CON1bits.SAMP = 1;
-
+    
+    LATBbits.LATB4 = 1; // IR enable
     while (1) {
 
         if (++LD2_toggle_counter >= CLOCK_LD_TOGGLE) {
             LD2_toggle_counter = 0;
             LATGbits.LATG9 = !LATGbits.LATG9;
-            AD1CON1bits.SAMP = 0;
         }
         
         if(++acquire_adc_counter >= CLOCK_ACQUIRE_ADC && !AD1CON1bits.DONE){
             acquire_adc_counter = 0;
-            AD1CON1bits.SAMP = !AD1CON1bits.SAMP;
+            AD1CON1bits.SAMP = 1;
         }
 
         if(AD1CON1bits.DONE){
             AD1CON1bits.DONE = 0;
+        
             int data = ADC1BUF0;
             double v_adc = (data / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
             double v_adc_batt = v_adc * 3;
