@@ -39,7 +39,7 @@ void init_adc(void){
     AD1CON3bits.SAMC = 16; // Set the automatic end
 
     AD1CON1bits.ADDMABM = 0; // DMA on
-    AD1CSSLbits.CSS11 = 1; // Select AN11
+    AD1CSSLbits.CSS15 = 1; // Select AN15
     AD1CON1bits.FORM = 0b00; // Data Output Format integer
 
     AD1CON1bits.ASAM = 0; // Selecting manual mode starting
@@ -47,7 +47,7 @@ void init_adc(void){
 
     AD1CON2bits.CHPS = 0b00; // 1 channel mode
     AD1CON2bits.CSCNA = 1; // Scan ch0
-    AD1CHS0bits.CH0SA = 11; // Choosing AN11 
+    AD1CHS0bits.CH0SA = 15; // Choosing AN15 
     AD1CHS0bits.CH0NA = 0; // Choosing VREFL
 
 }
@@ -61,8 +61,8 @@ int main(void) {
 
     TRISA = TRISG = 0x0000; // setting port A and G as output
     ANSELA = ANSELC = ANSELD = ANSELE = ANSELG = 0x0000; // disabling analog function
-    TRISB = 0xFFF7;
-    ANSELB = 0xFFF7;
+    TRISB = 0xFFFF;
+    ANSELB = 0xFFFF;
 
     // our largerst string is 20 bytes, this should be changed in case of differnt print messages
     char output_str [20]; 
@@ -77,7 +77,7 @@ int main(void) {
     AD1CON1bits.ADON = 1; // Turn on the ADC
     AD1CON1bits.SAMP = 1;
     
-    LATBbits.LATB4 = 1; // IR enable
+    LATAbits.LATA3 = 1; // IR enable
     while (1) {
 
         if (++LD2_toggle_counter >= CLOCK_LD_TOGGLE) {
