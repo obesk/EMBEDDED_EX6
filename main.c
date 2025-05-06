@@ -95,8 +95,8 @@ int main(void) {
         
             int data = ADC1BUF0;
             double v_adc = (data / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
-            double v_adc_batt = v_adc * 3;
-            sprintf(output_str, " ADC:%f ", v_adc_batt);
+            double dist = 2.34 - 4.74 * v_adc + 4.06 * pow(v_adc,2) - 1.6 * pow(v_adc,3) + 0.24 * pow(v_adc,4);
+            sprintf(output_str, " DIST:%f ", dist);
             print_to_buff(output_str, &UART_output_buff);
         }
 
