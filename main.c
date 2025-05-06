@@ -12,7 +12,7 @@
 
 // this define the frequency of the tasks based on the frequency of the main.
 #define CLOCK_LD_TOGGLE 50 // led2 blinking at 1Hz
-#define CLOCK_ACQUIRE_ADC 10
+#define CLOCK_ACQUIRE_ADC 50
 
 char input_buff[INPUT_BUFF_LEN];
 char output_buff[OUTPUT_BUFF_LEN];
@@ -31,17 +31,24 @@ struct circular_buffer UART_output_buff = {
 //BAT-VSENSE is 1/3 of the VBAT, we have to multiply the readed value by 3
 
 void init_adc(void){
-    AD1CON1bits.ADON = 0; //Turn off the ADC
+    AD1CON1bits.ADON = 0; // Turn off the ADC
 
+    AD1CON1bits.AD12B = 0; // Selecting 10-bit mode
+    AD1CON2bits.VCFG = 0b00;// Voltage reference vdd
     AD1CON3bits.ADCS = 8; // Set the Tad
-    AD1CON1bits.AD12B = 0; //Selecting 10-bit mode
+
     AD1CON1bits.ADDMABM = 0; // DMA on
-    AD1CON1bits.SIMSAM = 0; //Disabling sequential sampling of channels
-    AD1CON1bits.ASAM = 0; //Selecting manual mode
-    AD1CON1bits.SSRC = 0; //Selecting manual conversion
+    AD1CSSLbits.CSS11 = 1; // Select AN11
+    AD1CON1bits.FORM = 0b00; // Data Output Format integer
+
+    AD1CON1bits.ASAM = 0; // Selecting manual mode starting
+    AD1CON1bits.SSRC = 0; // Selecting manual conversion
+
     AD1CON2bits.CHPS = 0b00; // 1 channel mode
     AD1CON2bits.CSCNA = 1; // Scan ch0
-    AD1CHS0bits.CH0SA = 11; //Choosing AN11 
+    AD1CHS0bits.CH0SA = 11; // Choosing AN11 
+    AD1CHS0bits.CH0NA = 0; // Choosing VREFL
+
 }
 
 int main(void) {
@@ -53,7 +60,7 @@ int main(void) {
 
     TRISA = TRISG = 0x0000; // setting port A and G as output
     ANSELA = ANSELC = ANSELD = ANSELE = ANSELG = 0x0000; // disabling analog function
-    TRISB = 0xffff;
+    TRISB = 0xFFFF;
     ANSELB = 0xFFFF;
 
     // our largerst string is 20 bytes, this should be changed in case of differnt print messages
@@ -65,7 +72,8 @@ int main(void) {
 
     const int main_hz = 100;
     tmr_setup_period(TIMER1, 1000 / main_hz); // 100 Hz frequency
-    AD1CON1bits.ADON = 1; //Turn on the ADC
+
+    AD1CON1bits.ADON = 1; // Turn on the ADC
     AD1CON1bits.SAMP = 1;
 
     while (1) {
@@ -73,15 +81,23 @@ int main(void) {
         if (++LD2_toggle_counter >= CLOCK_LD_TOGGLE) {
             LD2_toggle_counter = 0;
             LATGbits.LATG9 = !LATGbits.LATG9;
+            AD1CON1bits.SAMP = 0;
+        }
+        
+        if(++acquire_adc_counter >= CLOCK_ACQUIRE_ADC && !AD1CON1bits.DONE){
+            acquire_adc_counter = 0;
+            AD1CON1bits.SAMP = !AD1CON1bits.SAMP;
         }
 
         if(AD1CON1bits.DONE){
-            int data = ADC1BUF0;
             AD1CON1bits.DONE = 0;
-            AD1CON1bits.SAMP = 0;
-            sprintf(output_str, "ADC: %d\n", data);
+            int data = ADC1BUF0;
+            double v_adc = (data / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
+            double v_adc_batt = v_adc * 3;
+            sprintf(output_str, " ADC:%f ", v_adc_batt);
             print_to_buff(output_str, &UART_output_buff);
         }
+
         tmr_wait_period(TIMER1);
     }
     return 0;
