@@ -12,7 +12,7 @@
 
 // this define the frequency of the tasks based on the frequency of the main.
 #define CLOCK_LD_TOGGLE 50 // led2 blinking at 1Hz
-#define CLOCK_ACQUIRE_ADC 10 // send ADC values to UART at 10Hz
+#define CLOCK_SHOW_ADC 100 // send ADC values to UART at 10Hz
 
 char input_buff[INPUT_BUFF_LEN];
 char output_buff[OUTPUT_BUFF_LEN];
@@ -43,8 +43,9 @@ int main(void) {
     char output_str [20]; 
 
     int LD2_toggle_counter = 0;
-    int acquire_adc_counter = 0;
+    int show_adc_counter = 0;
 
+    double dist, v_adc_batt;
 
     const int main_hz = 100;
     tmr_setup_period(TIMER1, 1000 / main_hz); // 100 Hz frequency
@@ -60,8 +61,11 @@ int main(void) {
             LATGbits.LATG9 = !LATGbits.LATG9;
         }
         
-        if(++acquire_adc_counter >= CLOCK_ACQUIRE_ADC && !AD1CON1bits.DONE){
-            acquire_adc_counter = 0;
+        if(++show_adc_counter >= CLOCK_SHOW_ADC){
+            show_adc_counter = 0;
+
+            sprintf(output_str, "$SENS,%f,%f*", dist,v_adc_batt);
+            print_to_buff(output_str, &UART_output_buff);
         }
 
         if(AD1CON1bits.DONE){
@@ -69,15 +73,11 @@ int main(void) {
         
             int adcff = ADC1BUFF;
             double v_adc_ir = (adcff / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
-            double dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
+            dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
 
             int adcb = ADC1BUFB;
             double v_adc = (adcb / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
-            double v_adc_batt = v_adc * 3;
-
-
-            sprintf(output_str, "$SENS,%f,%f*", dist,v_adc_batt);
-            print_to_buff(output_str, &UART_output_buff);
+            v_adc_batt = v_adc * 3;
         }
 
         tmr_wait_period(TIMER1);

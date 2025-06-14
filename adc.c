@@ -14,17 +14,19 @@ void init_adc(void){
     AD1CON3bits.ADCS = 8; // Set the Tad
     AD1CON3bits.SAMC = 16; // Set the automatic end
 
-    AD1CON1bits.ADDMABM = 0; // DMA on
+    AD1CON2bits.SMPI = 1;
+
+    AD1CON4bits.ADDMAEN = 0; // Turn off DMA
     AD1CSSLbits.CSS15 = 1; // Select AN15 - IR sensor
     AD1CSSLbits.CSS11 = 1; // Select AN11 - Battery
     AD1CON1bits.FORM = 0b00; // Data Output Format integer
-
-    AD1CON1bits.ASAM = 0; // Selecting automatic mode starting
+    AD1CON1bits.SIMSAM = 0;
+    AD1CON1bits.ASAM = 1; // Selecting automatic mode starting
     AD1CON1bits.SSRC = 7; // conversion starts after time specified by SAMC
 
-    AD1CON2bits.CHPS = 0b00; // 1 channel mode
+    AD1CON2bits.CHPS = 0b01; // 1 channel mode
     AD1CON2bits.CSCNA = 1; 
-    //AD1CHS0bits.CH0SA = 15; // Choosing AN15 
+    // AD1CHS0bits.CH0SA = 15; // Choosing AN15 
     // AD1CHS0bits.CH0SA = 11; // Choosing AN11
     AD1CHS0bits.CH0NA = 0; // Choosing VREFL
 }
