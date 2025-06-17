@@ -28,8 +28,6 @@ struct circular_buffer UART_output_buff = {
 };
 
 int main(void) {
-    init_uart();
-    init_adc();
 
     UART_input_buff.buff = input_buff;
     UART_output_buff.buff = output_buff;
@@ -38,6 +36,9 @@ int main(void) {
     ANSELA = ANSELC = ANSELD = ANSELE = ANSELG = 0x0000; // disabling analog function
     TRISB = 0xFFFF;
     ANSELB = 0xFFFF;
+
+    init_uart();
+    init_adc();
 
     // our largerst string is 20 bytes, this should be changed in case of differnt print messages
     char output_str [20]; 
@@ -49,11 +50,9 @@ int main(void) {
 
     const int main_hz = 100;
     tmr_setup_period(TIMER1, 1000 / main_hz); // 100 Hz frequency
-
-    AD1CON1bits.ADON = 1; // Turn on the ADC
-    // AD1CON1bits.SAMP = 1;
     
     LATAbits.LATA3 = 1; // IR enable
+    
     while (1) {
 
         if (++LD2_toggle_counter >= CLOCK_LD_TOGGLE) {
@@ -68,17 +67,20 @@ int main(void) {
             print_to_buff(output_str, &UART_output_buff);
         }
 
-        if(AD1CON1bits.DONE){
-            AD1CON1bits.DONE = 0;
-        
-            int adcff = ADC1BUFF;
-            double v_adc_ir = (adcff / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
-            dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
-
-            int adcb = ADC1BUFB;
-            double v_adc = (adcb / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
-            v_adc_batt = v_adc * 3;
+        while(!AD1CON1bits.DONE){
+            ;
         }
+
+        AD1CON1bits.SAMP = 0;
+        int adcff = ADC1BUF1;
+        double v_adc_ir = (adcff / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
+        dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
+
+        int adcb = ADC1BUF0;
+        double v_adc = (adcb / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
+        v_adc_batt = v_adc * 3;
+
+        AD1CON1bits.SAMP = 1;
 
         tmr_wait_period(TIMER1);
     }
