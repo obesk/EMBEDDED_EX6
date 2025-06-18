@@ -34,8 +34,6 @@ int main(void) {
 
     TRISA = TRISG = 0x0000; // setting port A and G as output
     ANSELA = ANSELC = ANSELD = ANSELE = ANSELG = 0x0000; // disabling analog function
-    TRISB = 0xFFFF;
-    ANSELB = 0xFFFF;
 
     init_uart();
     init_adc();
@@ -51,7 +49,8 @@ int main(void) {
     const int main_hz = 100;
     tmr_setup_period(TIMER1, 1000 / main_hz); // 100 Hz frequency
     
-    LATAbits.LATA3 = 1; // IR enable
+    TRISBbits.TRISB9 = 0;
+    LATBbits.LATB9 = 1; // IR enable
     
     while (1) {
 
@@ -74,7 +73,8 @@ int main(void) {
         AD1CON1bits.SAMP = 0;
         int adcff = ADC1BUF1;
         double v_adc_ir = (adcff / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
-        dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
+        //dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
+        dist = v_adc_ir;
 
         int adcb = ADC1BUF0;
         double v_adc = (adcb / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
