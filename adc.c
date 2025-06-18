@@ -27,8 +27,8 @@ void init_adc(void){
 
     AD1CON2bits.CSCNA = 1; // activate scan mode
     AD1CON2bits.CHPS = 1; // 2 channel mode
-    AD1CON1bits.SIMSAM = 0; // Enable sequential scanning
-    AD1CON2bits.SMPI = 1;
+    AD1CON1bits.SIMSAM = 1; // Enable sequential scanning
+    AD1CON2bits.SMPI = 1; //
 
     AD1CSSL = 0;
     AD1CSSLbits.CSS14 = 1; // Select AN14 - IR sensor

@@ -62,7 +62,7 @@ int main(void) {
         if(++show_adc_counter >= CLOCK_SHOW_ADC){
             show_adc_counter = 0;
 
-            sprintf(output_str, "$SENS,%f,%f*", dist,v_adc_batt);
+            sprintf(output_str, "$SENS,%.3f,%.3f*", dist,v_adc_batt);
             print_to_buff(output_str, &UART_output_buff);
         }
 
@@ -71,16 +71,15 @@ int main(void) {
         }
 
         AD1CON1bits.SAMP = 0;
-        int adcff = ADC1BUF1;
-        double v_adc_ir = (adcff / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
-        //dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
-        dist = v_adc_ir;
-
         int adcb = ADC1BUF0;
         double v_adc = (adcb / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
         v_adc_batt = v_adc * 3;
 
+        int adcff = ADC1BUF2;
+        double v_adc_ir = (adcff / 1023.0) * 3.3; // assuming Vref+ = 3.3 V
+        dist = 2.34 - 4.74 * v_adc_ir + 4.06 * pow(v_adc_ir,2) - 1.6 * pow(v_adc_ir,3) + 0.24 * pow(v_adc_ir,4);
         AD1CON1bits.SAMP = 1;
+        
 
         tmr_wait_period(TIMER1);
     }
